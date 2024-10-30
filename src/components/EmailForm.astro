@@ -1,0 +1,128 @@
+---
+interface Props {
+  leadMagnetId: string;
+}
+
+const { leadMagnetId } = Astro.props;
+---
+
+<form id="subscribe-form" class="space-y-4" data-lead-magnet-id={leadMagnetId}>
+  <div>
+    <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
+    <input
+      type="email"
+      id="email"
+      name="email"
+      required
+      class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+      placeholder="Enter your email address"
+    />
+  </div>
+  <button
+    type="submit"
+    class="w-full bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    Get Free Access
+  </button>
+  <p class="mt-4 text-sm text-gray-500 text-center">
+    We respect your privacy. Unsubscribe at any time.
+  </p>
+  <div id="error-message" class="hidden text-red-500 text-sm text-center mt-2"></div>
+  <div id="success-message" class="hidden text-green-500 text-sm text-center mt-2"></div>
+</form>
+
+<script>
+  const form = document.getElementById('subscribe-form');
+  const errorMessage = document.getElementById('error-message');
+  const successMessage = document.getElementById('success-message');
+  
+  const showMessage = (element: HTMLElement | null, message: string) => {
+    if (element) {
+      element.textContent = message;
+      element.classList.remove('hidden');
+    }
+  };
+
+  const hideMessages = () => {
+    errorMessage?.classList.add('hidden');
+    successMessage?.classList.add('hidden');
+  };
+
+  const downloadPDF = (url: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.download = 'prescriber-guide.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideMessages();
+
+    const formElement = e.target as HTMLFormElement;
+    const emailInput = formElement.querySelector('#email') as HTMLInputElement;
+    const submitButton = formElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    const leadMagnetId = formElement.dataset.leadMagnetId;
+    
+    const email = emailInput.value.trim();
+    
+    if (!email) {
+      showMessage(errorMessage, 'Please enter a valid email address.');
+      return;
+    }
+
+    submitButton.disabled = true;
+    submitButton.textContent = 'Processing...';
+
+    try {
+      const response = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email,
+          leadMagnetId,
+          siteId: import.meta.env.PUBLIC_SITE_ID
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Replace form with success state
+        const formContainer = formElement.parentElement;
+        if (formContainer) {
+          formContainer.innerHTML = `
+            <div class="text-center p-8 bg-green-50 rounded-lg">
+              <svg class="w-16 h-16 mx-auto text-green-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <h3 class="text-xl font-semibold text-gray-900 mb-2">Your download is ready!</h3>
+              <p class="text-gray-600 mb-4">We've also sent a backup link to your email.</p>
+              <button onclick="window.open('${result.downloadUrl}', '_blank')" class="bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700 transition-colors">
+                Download PDF
+              </button>
+            </div>
+          `;
+        }
+
+        // Start download automatically
+        if (result.downloadUrl) {
+          downloadPDF(result.downloadUrl);
+        }
+      } else {
+        showMessage(errorMessage, result.message || 'Subscription failed. Please try again.');
+      }
+    } catch (error) {
+      showMessage(errorMessage, 'An unexpected error occurred. Please try again.');
+      console.error('Error:', error);
+    } finally {
+      if (errorMessage && !errorMessage.classList.contains('hidden')) {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Get Free Access';
+      }
+    }
+  });
+</script>

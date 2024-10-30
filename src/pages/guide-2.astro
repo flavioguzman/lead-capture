@@ -1,0 +1,30 @@
+---
+import Layout from '../layouts/Layout.astro';
+import EmailForm from '../components/EmailForm.astro';
+import BenefitsList from '../components/BenefitsList.astro';
+
+const leadMagnet = {
+  id: "2",
+  title: "Complete Guide to Medication B",
+  description: "Essential prescribing information for Medication B",
+  benefits: [
+    'Drug interactions',
+    'Patient monitoring guidelines',
+    'Treatment algorithms'
+  ]
+};
+---
+
+<Layout title={leadMagnet.title}>
+  <main class="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div class="max-w-4xl mx-auto px-4 py-16">
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-8 text-center">
+        {leadMagnet.title}
+      </h1>
+
+      <BenefitsList benefits={leadMagnet.benefits}>
+        <EmailForm leadMagnetId={leadMagnet.id} />
+      </BenefitsList>
+    </div>
+  </main>
+</Layout>

@@ -1,0 +1,30 @@
+---
+import Layout from '../layouts/Layout.astro';
+import EmailForm from '../components/EmailForm.astro';
+import BenefitsList from '../components/BenefitsList.astro';
+
+const leadMagnet = {
+  id: import.meta.env.PUBLIC_LEAD_MAGNET_ID,
+  title: "What Every Prescriber Needs to Know About Medication Name",
+  benefits: [
+    'Most common indications (FDA approved and off-label)',
+    'Dosing strategies',
+    'Side effect management',
+    'Drug interactions'
+  ]
+};
+---
+
+<Layout title="Drug Information for Prescribers">
+  <main class="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div class="max-w-4xl mx-auto px-4 py-16">
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-8 text-center">
+        {leadMagnet.title}
+      </h1>
+
+      <BenefitsList benefits={leadMagnet.benefits}>
+        <EmailForm leadMagnetId={leadMagnet.id} />
+      </BenefitsList>
+    </div>
+  </main>
+</Layout>
